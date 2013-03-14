@@ -1,12 +1,13 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <vector>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/any.hpp>
-#include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/none.hpp>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
@@ -63,6 +64,8 @@ struct Constant {
 
   Constant() {}
 
+  Constant(const Type &type, const std::string &name, std::string &value)
+      : type(type), name(name), value(boost::algorithm::trim_copy(value)) {};
   template<typename T>
   Constant(const Type &type, const std::string &name, T &value)
       : type(type), name(name), value(value) {};
