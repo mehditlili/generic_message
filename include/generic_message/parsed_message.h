@@ -54,12 +54,12 @@ typedef ArrayType<BaseType> BaseTypeArray;
 typedef ArrayType<MessageType> MessageTypeArray;
 
 typedef boost::variant<BaseType, MessageType, BaseTypeArray, MessageTypeArray> Type;
-typedef boost::variant<bool, int, double, std::vector<char> > BaseTypes;
+typedef boost::variant<bool, long long, double, std::string > ConstantValueType;
 
 struct Constant {
   Type type;
   std::string name;
-  boost::any value;
+  ConstantValueType value;
 
   Constant() {}
 

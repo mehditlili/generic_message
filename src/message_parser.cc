@@ -50,21 +50,27 @@ struct MessageGrammar
   qi::rule<Iterator, MessageTypeArray(), SkipGrammar<Iterator> > message_type_array;  
   qi::rule<Iterator, Type(), SkipGrammar<Iterator> > type;
   qi::rule<Iterator, Field(), SkipGrammar<Iterator> > field;
+  qi::rule<Iterator, bool(), SkipGrammar<Iterator> > bool_constant;
+  qi::rule<Iterator, long long(), SkipGrammar<Iterator> > fixed_number_constant;
+  qi::rule<Iterator, double(), SkipGrammar<Iterator> > floating_point_constant;
+  qi::rule<Iterator, std::string(), SkipGrammar<Iterator> > string_constant;
   qi::rule<Iterator, Constant(), SkipGrammar<Iterator> > constant;
   qi::rule<Iterator, ParsedMessage(), SkipGrammar<Iterator> > message;
 
-  qi::symbols<char, BaseType> base_types;
+  qi::symbols<char, BaseType> bool_type;
+  qi::symbols<char, BaseType> fixed_number_types;
+  qi::symbols<char, BaseType> floating_point_types;
+  qi::symbols<char, BaseType> string_type;
   qi::symbols<char, BaseType> time_types;
-
-  // Hack to allow to return the right parser from parseConstant.
-  qi::rule<Iterator, BaseTypes(), SkipGrammar<Iterator> > current_constant_parser;
 
   MessageGrammar() : MessageGrammar::base_type(message) {
     using qi::lit;
     using qi::lexeme;
     using qi::eol;
     using spirit::ulong_;
-    using spirit::lazy;
+    using spirit::bool_;
+    using spirit::long_long;
+    using spirit::double_;
     using ascii::char_;
     using phoenix::construct;
     using phoenix::at_c;
@@ -72,8 +78,8 @@ struct MessageGrammar
     using phoenix::bind;
     using namespace qi::labels;
 
-    base_types.add
-        ("bool", BaseType(BaseType::BOOL))
+    bool_type.add("bool", BaseType(BaseType::BOOL));
+    fixed_number_types.add
         ("int8", BaseType(BaseType::INT8))
         ("uint8", BaseType(BaseType::UINT8))
         ("int16", BaseType(BaseType::INT16))
@@ -81,11 +87,12 @@ struct MessageGrammar
         ("int32", BaseType(BaseType::INT32))
         ("uint32", BaseType(BaseType::UINT32))
         ("int64", BaseType(BaseType::INT64))
-        ("uint64", BaseType(BaseType::UINT64))
+        ("uint64", BaseType(BaseType::UINT64));
+    floating_point_types.add
         ("float32", BaseType(BaseType::FLOAT32))
-        ("float64", BaseType(BaseType::FLOAT64))
+        ("float64", BaseType(BaseType::FLOAT64));
+    string_type.add
         ("string", BaseType(BaseType::STRING));
-
     time_types.add
         ("time", BaseType(BaseType::TIME))
         ("duration", BaseType(BaseType::DURATION));
@@ -95,8 +102,8 @@ struct MessageGrammar
     
     array_size %= lit('[') >> -ulong_ >> lit(']');
     
-    base_type = base_types | time_types;
-    constant_type = base_types;
+    base_type = bool_type | fixed_number_types | floating_point_types
+                | string_type | time_types;
 
     message_type =
         lexeme[ (basic_id >> lit('/') >> basic_id) [ _val = construct<MessageType>(_1, _2) ]]
@@ -111,44 +118,25 @@ struct MessageGrammar
 
     field = (type >> identifier >> eol) [ _val = construct<Field>(_1, _2) ];
 
-    constant = (constant_type [ phoenix::ref(current_constant_parser) =
-                                bind(&MessageGrammar<Iterator>::parseConstant, _1) ]
-                >> identifier >> lit('=')
-                >> lazy(phoenix::val(phoenix::ref(current_constant_parser)))
-                >> eol) [ _val = construct<Constant>(_1, _2, _3) ];
+    bool_constant %= bool_;
+    fixed_number_constant %= long_long;
+    floating_point_constant %= double_;
+    string_constant %= lexeme[*(char_ - eol) >> &eol];
+    
+    constant =
+        (bool_type >> identifier >> lit('=') >> bool_constant) [
+            _val = construct<Constant>(_1, _2, _3) ]
+        | (fixed_number_types >> identifier >> lit('=') >> fixed_number_constant) [
+            _val = construct<Constant>(_1, _2, _3) ]
+        | (floating_point_types >> identifier >> lit('=') >> floating_point_constant) [
+            _val = construct<Constant>(_1, _2, _3) ]
+        | (string_type >> identifier >> lit('=') >> string_constant) [
+            _val = construct<Constant>(_1, _2, _3) ];
 
     message = *(
         field [ push_back(at_c<1>(_val), _1) ]
         | constant [ push_back(at_c<0>(_val), _1) ]
         | eol);
-  }
-
-  static qi::rule<Iterator, BaseTypes(), SkipGrammar<Iterator> > parseConstant(
-      const Type &type) {
-    using spirit::bool_;
-    using spirit::int_;
-    using spirit::double_;
-    using spirit::eps;
-    using spirit::eol;
-    using spirit::lexeme;
-    using ascii::char_;
-    
-    const BaseType &base_type = boost::get<BaseType>(type);
-    switch (base_type.type) {
-      case BaseType::BOOL: return bool_;
-      case BaseType::INT8:
-      case BaseType::UINT8:
-      case BaseType::INT16:
-      case BaseType::UINT16:
-      case BaseType::INT32:
-      case BaseType::UINT32:
-      case BaseType::INT64:
-      case BaseType::UINT64: return int_;
-      case BaseType::FLOAT32:
-      case BaseType::FLOAT64: return double_;
-      case BaseType::STRING: return lexeme[*(char_ - eol) >> &eol];
-      default: return eps(false);
-    }
   }
 };
 
@@ -167,7 +155,7 @@ bool parse_message(const std::string &message, ParsedMessage *result) {
   std::cout << "parsed: " << std::string(message.begin(), iter) << std::endl;
   std::cout << "not parsed: " << std::string(iter, end) << std::endl;
   
-  return r; // && iter == end;
+  return r && iter == end;
 }
 
 }  // namespace message_parser
