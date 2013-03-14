@@ -47,7 +47,7 @@ struct ArrayType {
   ArrayType() {}
   ArrayType(
       const T &type,
-      const boost::optional<size_t> size = boost::none)
+      const boost::optional<size_t> size = boost::optional<size_t>())
       : type(type), size(size) {}
 };
 
