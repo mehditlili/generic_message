@@ -151,10 +151,6 @@ bool parse_message(const std::string &message, ParsedMessage *result) {
       MessageGrammar<std::string::const_iterator>(),
       SkipGrammar<std::string::const_iterator>(),
       *result);
-
-  std::cout << "parsed: " << std::string(message.begin(), iter) << std::endl;
-  std::cout << "not parsed: " << std::string(iter, end) << std::endl;
-  
   return r && iter == end;
 }
 
