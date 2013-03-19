@@ -6,4 +6,6 @@ include_directories(include)
 
 add_executable(test_generic_message
   src/test_generic_message.cc
-  src/message_parser.cc)
+  src/message_parser.cc
+  src/message_pool.cc
+  src/compiled_message.cc)
