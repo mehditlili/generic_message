@@ -98,4 +98,52 @@ bool isDynamic(const MessagePool &pool, const T &type) {
   return MessageTypeTraits<T>::isDynamic(pool, type);
 }
 
+template<typename T>
+struct native_base_type {
+};
+
+template<> struct native_base_type<bool> {
+  static const BaseType::base_type type = BaseType::BOOL;
+};
+
+template<> struct native_base_type<int8_t> {
+  static const BaseType::base_type type = BaseType::INT8;
+};
+
+template<> struct native_base_type<uint8_t> {
+  static const BaseType::base_type type = BaseType::UINT8;
+};
+
+template<> struct native_base_type<int16_t> {
+  static const BaseType::base_type type = BaseType::INT16;
+};
+
+template<> struct native_base_type<uint16_t> {
+  static const BaseType::base_type type = BaseType::UINT16;
+};
+
+template<> struct native_base_type<int32_t> {
+  static const BaseType::base_type type = BaseType::INT32;
+};
+
+template<> struct native_base_type<uint32_t> {
+  static const BaseType::base_type type = BaseType::UINT32;
+};
+
+template<> struct native_base_type<int64_t> {
+  static const BaseType::base_type type = BaseType::INT64;
+};
+
+template<> struct native_base_type<uint64_t> {
+  static const BaseType::base_type type = BaseType::UINT64;
+};
+
+template<> struct native_base_type<float> {
+  static const BaseType::base_type type = BaseType::FLOAT32;
+};
+
+template<> struct native_base_type<double> {
+  static const BaseType::base_type type = BaseType::FLOAT64;
+};
+
 }  // namespace generic_message
