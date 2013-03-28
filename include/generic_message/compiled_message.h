@@ -73,8 +73,8 @@ class CompiledMessage {
     CompiledField();
     CompiledField(const CompiledField &src);
     CompiledField(const Field &field, const AccessPath &path);
-    const Field &field() { return *field_; }
-    const AccessPath &path() { return path_; }
+    const Field &field() const { return *field_; }
+    const AccessPath &path() const { return path_; }
 
    private:
     const Field *field_;
